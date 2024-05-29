@@ -22,7 +22,8 @@ def pose_estimation():
             ret, frame = cap.read()
             if not ret:
                 break
-
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+            frame = cv2.flip(frame,1)
             # Convert the frame to RGB format
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -31,6 +32,8 @@ def pose_estimation():
 
             # Annotate the frame with pose estimation
             frame = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+            #print(results.pose_world_landmarks)
+            #print(results.pose_world_landmarks.RI)
             if results.pose_landmarks:
                 landmarks = results.pose_landmarks.landmark
                 mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
@@ -52,7 +55,7 @@ def pose_estimation():
 
                 # Relative Positioning of LEFT_WRIST AND RIGHT_WRIST
                 fixed_distance = 80 / dist_bw_two_points(mp_pose.PoseLandmark.RIGHT_WRIST, mp_pose.PoseLandmark.LEFT_WRIST, frame)
-                print(fixed_distance)
+                #print(fixed_distance)
                 # LEFT ARM LENGTH
                 left_arm_length = fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.LEFT_SHOULDER, mp_pose.PoseLandmark.LEFT_WRIST, frame)
                 
@@ -69,19 +72,17 @@ def pose_estimation():
                 
                 # SHOULDER LENGTH
                 shoulder_length = fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.RIGHT_SHOULDER, mp_pose.PoseLandmark.LEFT_SHOULDER, frame) + 3
-                chest_circumference = 3.14 * shoulder_length
+                chest_circumference = 3.14 * shoulder_length - 20
                 
                 # WAIST CIRCUMFERENCE
                 waist_length = fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.RIGHT_HIP, mp_pose.PoseLandmark.LEFT_HIP, frame) + 4.86
                 waist_circumference = 3.14 * waist_length
                 
                 # HEIGHT
-                height = fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.NOSE, mp_pose.PoseLandmark.LEFT_HEEL,
-                                                            frame) + 2 * fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.NOSE,
-                                                                                                             mp_pose.PoseLandmark.LEFT_EYE_INNER, frame)
-                
-                height2 = (fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.NOSE, mp_pose.PoseLandmark.LEFT_HEEL, frame) +
-                  fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.NOSE, mp_pose.PoseLandmark.LEFT_HIP, frame))
+                nosey = landmarks[mp_pose.PoseLandmark.NOSE]
+                nosey_position = (int(nosey.y * frame.shape[0]))
+                #print(nosey_position)
+                height = (1760-nosey_position)/481.0 + 0.16
         
                 # SITTING HEIGHT
                 #sitting_height = height - (left_thigh_length + right_thigh_length) / 2
@@ -91,7 +92,6 @@ def pose_estimation():
 
                 calculated_values['fixed_distance'] = str(round(2, 2)) + " cm"
                 calculated_values['height'] = str(round(height, 2)) + " cm"
-                calculated_values['height2'] = str(round(height2, 2)) + " cm"
                 calculated_values['left_arm_length'] = str(round(left_arm_length, 2)) + " cm"
                 #calculated_values['left_thigh_length'] = str(round(left_thigh_length, 2)) + " cm"
                 #calculated_values['left_knee_length'] = str(round(left_knee_length, 2)) + " cm"
@@ -123,7 +123,9 @@ def pose_estimation():
 def start_video():
     global cap
     if cap is None or not cap.isOpened():
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
 
 def stop_video():
     global cap
@@ -146,7 +148,7 @@ def remove_background(input_path):
 
     # Remove the background from the given image
     output_image = remove(input_image)
-
+ 
     # Save the image in the given path
     output_image.save(output_path)
 
