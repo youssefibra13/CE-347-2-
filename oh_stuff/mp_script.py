@@ -1,5 +1,7 @@
 import mediapipe as mp
 
+# import mediapipe.tasks as mtasks
+
 from mediapipe import solutions
 
 import math
@@ -62,7 +64,7 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
   return annotated_image
 
-model_path = 'C:\\Users\\ohjui\\Desktop\\northwestern tings\\Spring 2024\\347-2\\not_racist.task'
+model_path = 'not_racist.task'
          
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
