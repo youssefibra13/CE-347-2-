@@ -3,14 +3,51 @@ import mediapipe as mp
 import math
 import time
 from rembg import remove
-from PIL import Image, ImageTk
+from PIL import Image, ImageChops, ImageTk
 import os
 import tkinter as tk
+import requests
 
 cap = None
 calculated_values = {}
 height = 0
 pose_running = False
+selected_top = None
+selected_bottom = None
+
+# Create a dictionary that maps image numbers to their links
+image_links = {
+    1: 'https://m.media-amazon.com/images/I/51ei4ovZkML._AC_SL1500_.jpg',
+    2: 'https://m.media-amazon.com/images/I/81LQKqWP-SL._AC_SL1240_.jpg',
+    3: 'https://m.media-amazon.com/images/I/51fXZywiqJL._AC_SL1500_.jpg',
+    4: 'https://m.media-amazon.com/images/I/61ghRCrF+zL._AC_SL1500_.jpg',
+    5: 'https://m.media-amazon.com/images/I/91vGZV0B7cL._AC_SL1500_.jpg',
+    6: 'https://m.media-amazon.com/images/I/51iejFS+YjL._AC_SL1500_.jpg',
+    7: 'https://m.media-amazon.com/images/I/61PW2AjZDEL._AC_SL1000_.jpg',
+    8: 'https://m.media-amazon.com/images/I/71+8pg5EZvL._AC_SL1500_.jpg',
+    9: 'https://m.media-amazon.com/images/I/81LOWvyXYvL._AC_SL1500_.jpg',
+    10: 'https://m.media-amazon.com/images/I/814kdMWIe2L._AC_SL1500_.jpg',
+    11: 'https://m.media-amazon.com/images/I/61KFJ-d4BhL._AC_SL1500_.jpg',
+    12: 'https://m.media-amazon.com/images/I/81eS7FlxHwL._AC_SL1500_.jpg'
+}
+
+def send_data_to_server(top_link, bottom_link):
+    url = 'https://agents.socratics.ai:8080/ootd'
+    data = {
+        'lower_body': bottom_link,
+        'upper_body': top_link
+    }
+
+    files = {
+        'body': ('cropped_resized_frame_output.png', open('cropped_resized_frame_output.png', 'rb'), 'image/png')
+    }
+    response = requests.post(url, data=data, files=files)
+    if response.status_code == 200:
+        print('Data sent successfully!')
+        return response.content
+    else:
+        print('Failed to send data.')
+        return None
 
 def pose_estimation():
     global cap, calculated_values, pose_running
@@ -110,18 +147,14 @@ def pose_estimation():
                     cv2.putText(frame, f"{key}: {value}", (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                     y_offset += 30
                 
-            # Convert the frame to an image that can be displayed in Tkinter
-            img = Image.fromarray(frame)
-            imgtk = ImageTk.PhotoImage(image=img)
-            live_stream_label.imgtk = imgtk
-            live_stream_label.configure(image=imgtk)
-                
             # Display the annotated frame
-            #cv2.imshow('Pose Estimation', frame)
+            cv2.imshow('Pose Estimation', frame)
 
             if not picture_taken and time.time() - start_time > 15:
                 cv2.imwrite('captured_frame.jpg', clean_frame)
                 picture_taken = True
+                crop_and_save_image('captured_frame.jpg', min_x_l, min_y_l, max_x_l, max_y_l)
+                send_to_server_and_display()
 
             # Break the loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -131,7 +164,7 @@ def pose_estimation():
     cv2.destroyAllWindows()
     print(calculated_values)
 
-    crop_and_save_image('captured_frame.jpg', min_x_l, min_y_l, max_x_l, max_y_l)
+    
 
 def good_ar_bb(x0, x1, y0, y1, ar_t = 0.75):
     dx = x1 - x0
@@ -168,17 +201,17 @@ def crop_and_save_image(input_path, min_x, min_y, max_x, max_y):
     cropped_img = img.crop((min_x, min_y, max_x, max_y))
 
     resized_image = cropped_img.resize((768, 1024))
-    resized_image.save('cropped_resized_frame.jpg')
-    print("Cropped image saved as")
+    resized_image.save('cropped_resized_frame_output.png')
+    print("Cropped image saved as cropped_resized_frame_output.png")
 
-    remove_background('cropped_resized_frame.jpg')
+    remove_background('cropped_resized_frame_output.png')
 
 def start_video():
     global cap
     if cap is None or not cap.isOpened():
         cap = cv2.VideoCapture(1)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1024)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1536/2)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2048)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1536)
 
 def stop_video():
     global cap, pose_running
@@ -209,46 +242,6 @@ def start_pose_estimation():
     global root, main_frame
     main_frame.destroy()  # Destroy the initial frame
 
-    # Create new frame for video and measurements
-    new_frame = tk.Frame(root)
-    new_frame.pack(fill=tk.BOTH, expand=True)
-
-    # Left column for images
-    left_frame = tk.Frame(new_frame)
-    left_frame.pack(side=tk.LEFT, fill=tk.Y)
-
-    # Load and display images in the left column
-    for i in range(1, 6):
-        img_path = os.path.join(os.getcwd(), f'image{i}.jpg')  # Assuming image files are named image1.png, image2.png, etc.
-        img = Image.open(img_path)
-        img = img.resize((150, 150))
-        imgtk = ImageTk.PhotoImage(img)
-        img_label = tk.Label(left_frame, image=imgtk)
-        img_label.image = imgtk  # Keep a reference to avoid garbage collection
-        img_label.pack(pady=10)
-
-    # Center frame for live stream
-    center_frame = tk.Frame(new_frame)
-    center_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-    global live_stream_label
-    live_stream_label = tk.Label(center_frame)
-    live_stream_label.pack(fill=tk.BOTH, expand=True)
-
-    # Right column for images
-    right_frame = tk.Frame(new_frame)
-    right_frame.pack(side=tk.LEFT, fill=tk.Y)
-
-    # Load and display images in the right column
-    for i in range(6, 11):
-        img_path = os.path.join(os.getcwd(), f'image{i}.jpg')  # Assuming image files are named image6.png, image7.png, etc.
-        img = Image.open(img_path)
-        img = img.resize((150, 150))
-        imgtk = ImageTk.PhotoImage(img)
-        img_label = tk.Label(right_frame, image=imgtk)
-        img_label.image = imgtk  # Keep a reference to avoid garbage collection
-        img_label.pack(pady=10)
-
     start_video()
     global pose_running
     pose_running = True
@@ -263,6 +256,77 @@ def show_notification():
     root.after(8000, lambda: notification.destroy())
     root.after(8000, start_pose_estimation)
 
+def show_images():
+    global root, main_frame
+
+    main_frame.destroy()  # Destroy the initial frame
+
+    image_frame = tk.Frame(root)
+    image_frame.pack(fill=tk.BOTH, expand=True)
+
+    top_label = tk.Label(image_frame, text="Enter the number for the top:", font=('Helvetica', 16))
+    top_label.grid(row=0, column=0, pady=10, sticky=tk.E)
+    top_entry = tk.Entry(image_frame, font=('Helvetica', 16))
+    top_entry.grid(row=0, column=1, pady=10, sticky=tk.W)
+
+    bottom_label = tk.Label(image_frame, text="Enter the number for the bottom/pants:", font=('Helvetica', 16))
+    bottom_label.grid(row=1, column=0, pady=10, sticky=tk.E)
+    bottom_entry = tk.Entry(image_frame, font=('Helvetica', 16))
+    bottom_entry.grid(row=1, column=1, pady=10, sticky=tk.W)
+
+    image_paths = [f'image{i}.jpg' for i in range(1, 13)]  # Update to 12 images
+    images = []
+    
+    for image_path in image_paths:
+        img = Image.open(image_path)
+        img = img.resize((200, 200))  # Resize the images if needed
+        img = ImageTk.PhotoImage(img)
+        images.append(img)
+
+    for i in range(3):  # 3 rows
+        for j in range(4):  # 4 images per row
+            image_index = i * 4 + j
+            if image_index < len(images):
+                label = tk.Label(image_frame, image=images[image_index])
+                label.grid(row=i + 2, column=j, padx=10, pady=10)
+                label.image = images[image_index]  # Keep a reference to avoid garbage collection
+                label_text = tk.Label(image_frame, text=f"{image_index + 1}", font=('Helvetica', 16))
+                label_text.grid(row=i + 2, column=j, sticky=tk.S, pady=10)
+
+    submit_button = tk.Button(image_frame, text="Submit", command=lambda: submit_selection(top_entry.get(), bottom_entry.get()), font=('Helvetica', 16))
+    submit_button.grid(row=5, column=0, columnspan=4, pady=20)
+
+def submit_selection(top, bottom):
+    global selected_top, selected_bottom, main_frame
+    selected_top = top
+    selected_bottom = bottom
+    print(f"Selected Top: {selected_top}, Selected Bottom: {selected_bottom}")
+
+    show_notification()
+
+def send_to_server_and_display():
+    global selected_top, selected_bottom
+    top_link = image_links[int(selected_top)]
+    bottom_link = image_links[int(selected_bottom)]
+    received_image_data = send_data_to_server(top_link, bottom_link)
+    
+    if received_image_data:
+        display_received_image(received_image_data)
+
+def display_received_image(image_data):
+    global root
+    image = Image.open(BytesIO(image_data))
+    image = ImageTk.PhotoImage(image)
+    
+    result_frame = tk.Frame(root)
+    result_frame.pack(fill=tk.BOTH, expand=True)
+
+    result_label = tk.Label(result_frame, image=image)
+    result_label.pack(pady=20)
+    result_label.image = image  # Keep a reference to avoid garbage collection
+
+    stop_video()
+
 if __name__ == '__main__':
     root = tk.Tk()
     root.title("Virtual Try-on")
@@ -273,7 +337,7 @@ if __name__ == '__main__':
     message_label = tk.Label(main_frame, text="Wanna Try some outfits before shopping? Try Our Virtual Try-on Today.", font=('Helvetica', 20))
     message_label.pack(pady=40)
 
-    start_button = tk.Button(main_frame, text="Start", command=show_notification, font=('Helvetica', 18))
+    start_button = tk.Button(main_frame, text="Start", command=show_images, font=('Helvetica', 18))
     start_button.pack(pady=20)
 
     root.mainloop()
