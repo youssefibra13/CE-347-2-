@@ -77,9 +77,9 @@ def pose_estimation():
                 
                 # HEIGHT
                 nosey = landmarks[mp_pose.PoseLandmark.NOSE]
-                nosey_position = (int(nosey.y * frame.shape[0]))
+                nposition = int(nosey.y * frame.shape[0])
                 #print(nosey_position)
-                height = (1760-nosey_position)/481.0 + 0.16
+                height = (253 - 0.156*nposition)/100 + 0.13
 
 
                 # LEFT LEG LENGTH
@@ -120,7 +120,7 @@ def pose_estimation():
                 min_y_l = int(min(y_coord) * frame.shape[0])
                 max_y_l = int(max(y_coord) * frame.shape[0])
 
-                min_x_l, max_x_l, min_y_l, max_y_l = good_ar_bb(min_x_l - 10, max_x_l + 10, min_y_l - 80, max_y_l + 30)
+                min_x_l, max_x_l, min_y_l, max_y_l = good_ar_bb(min_x_l - 10, max_x_l + 10, min_y_l - 90, max_y_l + 30)
                 cv2.rectangle(frame, (min_x_l, min_y_l), (max_x_l, max_y_l), (0, 255, 0),2)
                 
             # Display the annotated frame

@@ -7,6 +7,7 @@ from PIL import Image, ImageChops, ImageTk
 import os
 import tkinter as tk
 import requests
+from io import BytesIO
 
 cap = None
 calculated_values = {}
@@ -25,8 +26,8 @@ image_links = {
     6: 'https://m.media-amazon.com/images/I/51iejFS+YjL._AC_SL1500_.jpg',
     7: 'https://m.media-amazon.com/images/I/61PW2AjZDEL._AC_SL1000_.jpg',
     8: 'https://m.media-amazon.com/images/I/71+8pg5EZvL._AC_SL1500_.jpg',
-    9: 'https://m.media-amazon.com/images/I/81LOWvyXYvL._AC_SL1500_.jpg',
-    10: 'https://m.media-amazon.com/images/I/814kdMWIe2L._AC_SL1500_.jpg',
+    9: 'https://m.media-amazon.com/images/I/6194YpcZjFL._AC_SL1500_.jpg'    ,
+    10: 'https://m.media-amazon.com/images/I/41mRsJ2YImL._AC_SY879_.jpg',
     11: 'https://m.media-amazon.com/images/I/61KFJ-d4BhL._AC_SL1500_.jpg',
     12: 'https://m.media-amazon.com/images/I/81eS7FlxHwL._AC_SL1500_.jpg'
 }
@@ -44,7 +45,11 @@ def send_data_to_server(top_link, bottom_link):
     response = requests.post(url, data=data, files=files)
     if response.status_code == 200:
         print('Data sent successfully!')
-        return response.content
+        f = open('ootd_image_out.jpg', 'wb')
+
+        f.write(response.content)
+
+        f.close()
     else:
         print('Failed to send data.')
         return None
@@ -116,10 +121,10 @@ def pose_estimation():
                     waist_length = fixed_distance * dist_bw_two_points(mp_pose.PoseLandmark.RIGHT_HIP, mp_pose.PoseLandmark.LEFT_HIP, frame) + 4.86
                     waist_circumference = 3.14 * waist_length
                     
-                    # HEIGHT
                     nosey = landmarks[mp_pose.PoseLandmark.NOSE]
-                    nosey_position = (int(nosey.y * frame.shape[0]))
-                    height = (1760-nosey_position)/481.0 + 0.16
+                    nposition = int(nosey.y * frame.shape[0])
+                    #print(nosey_position)
+                    height = (253 - 0.156*nposition)/100 + 0.13
 
                     calculated_values['Fixed Distance'] = str(round(fixed_distance, 2)) + " cm"
                     calculated_values['Height'] = str(round(height, 2)) + " cm"
@@ -155,6 +160,9 @@ def pose_estimation():
                 picture_taken = True
                 crop_and_save_image('captured_frame.jpg', min_x_l, min_y_l, max_x_l, max_y_l)
                 send_to_server_and_display()
+
+                im = Image.open("ootd_image_out.jpg")
+                im.show()
 
             # Break the loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -209,7 +217,7 @@ def crop_and_save_image(input_path, min_x, min_y, max_x, max_y):
 def start_video():
     global cap
     if cap is None or not cap.isOpened():
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2048)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1536)
 
@@ -305,27 +313,29 @@ def submit_selection(top, bottom):
     show_notification()
 
 def send_to_server_and_display():
+    print('sending image to server')
+
     global selected_top, selected_bottom
     top_link = image_links[int(selected_top)]
     bottom_link = image_links[int(selected_bottom)]
     received_image_data = send_data_to_server(top_link, bottom_link)
     
-    if received_image_data:
-        display_received_image(received_image_data)
+    # if received_image_data:
+    #     display_received_image(received_image_data)
 
-def display_received_image(image_data):
-    global root
-    image = Image.open(BytesIO(image_data))
-    image = ImageTk.PhotoImage(image)
+# def display_received_image(image_data):
+#     global root
+#     image = Image.open(BytesIO(image_data))
+#     image = ImageTk.PhotoImage(image)
     
-    result_frame = tk.Frame(root)
-    result_frame.pack(fill=tk.BOTH, expand=True)
+#     result_frame = tk.Frame(root)
+#     result_frame.pack(fill=tk.BOTH, expand=True)
 
-    result_label = tk.Label(result_frame, image=image)
-    result_label.pack(pady=20)
-    result_label.image = image  # Keep a reference to avoid garbage collection
+#     result_label = tk.Label(result_frame, image=image)
+#     result_label.pack(pady=20)
+#     result_label.image = image  # Keep a reference to avoid garbage collection
 
-    stop_video()
+#     stop_video()
 
 if __name__ == '__main__':
     root = tk.Tk()

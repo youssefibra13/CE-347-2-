@@ -40,16 +40,17 @@ def pose_estimation():
                 right_wrist_position = (int(right_wrist.x * frame.shape[1]), int(right_wrist.y * frame.shape[0]))
                 left_wrist = landmarks[mp_pose.PoseLandmark.LEFT_WRIST]
                 left_wrist_position = (int(left_wrist.x * frame.shape[1]), int(left_wrist.y * frame.shape[0]))
-                #nosey = landmarks[mp_pose.PoseLandmark.NOSE]
-                nposition = int(left_wrist.x * frame.shape[1]) - int(right_wrist.x * frame.shape[1])
+                nosey = landmarks[mp_pose.PoseLandmark.NOSE]
+                nposition = int(nosey.y * frame.shape[0])
                 #print(nosey_position)
-                #nose_to_head = (1760-nosey_position)/481.0 + 0.16
+                nose_to_head = (226 - 0.125*nposition)/100 + 0.1
                 # Print the right wrist position every second
                 current_time = time.time()
                 if current_time - last_print_time >= 1:
                    # print(f"Right Wrist Position: {right_wrist_position}")
                    #print(f"left Wrist Position: {left_wrist_position}")
-                    print(nposition)
+                    print("height = " + str(nose_to_head))
+                    print("pixel height = " + str(nposition))
                     last_print_time = current_time
 
                 cv2.circle(frame, right_wrist_position, 5, (0, 255, 0), -1)
@@ -60,8 +61,8 @@ def pose_estimation():
             # Break the loop if 'q' is pressed or 15 seconds have passed
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-            if current_time - start_time > 400:
-                break
+            #if current_time - start_time > 400:
+              #  break
 
     cap.release()
     cv2.destroyAllWindows()
@@ -84,3 +85,5 @@ if __name__ == '__main__':
     start_video()
     pose_estimation()
     stop_video()
+
+# 
