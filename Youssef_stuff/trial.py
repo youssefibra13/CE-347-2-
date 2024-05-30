@@ -70,8 +70,8 @@ def start_video():
     global cap
     if cap is None or not cap.isOpened():
         cap = cv2.VideoCapture(0)  # Use 0 for the default camera
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3072)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2304)
 
 
 def stop_video():
