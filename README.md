@@ -1,64 +1,7 @@
-Northwestern University
-
-McCormick School of Engineering
-
-Department of Electrical Engineering and Computer Science
-
-<img src="media/image4.png" style="width:1.97917in;height:1.97917in" />
-
-**CE 347 – Microprocessor Systems Project II**
-
-Spring Quarter - 06/01/2024
-
 **AI Smart Mirror \|**
 [<u>Github</u>](https://github.com/youssefibra13/CE-347-2-.git)
 
-Design Document
 
-Juin Chen Oh - juinoh2024@u.northwestern.edu
-
-Youssef Ibrahim - youssefibrahim2024@u.northwestern.edu
-
-**Table of contents**
-
-[**1. Introduction 2**](#introduction)
-
-[**2. Overview 2**](#overview)
-
-[**3. System Design Analysis 3**](#system-design-analysis)
-
-[**4. Ethical Considerations 5**](#ethical-considerations)
-
-[**5. Hardware diagrams 7**](#hardware-diagrams)
-
-[**6. Software diagrams and descriptions
-8**](#software-diagrams-and-descriptions)
-
-[**7. Quantitative requirements 10**](#quantitative-requirements)
-
-> [7.1. Design Requirements 10](#design-requirements)
-
-[**8. Physical aspects 11**](#physical-aspects)
-
-[**9. Standards 12**](#standards)
-
-> [9.1. Physical Standards 12](#physical-standards)
->
-> [9.2. Coding and Development Standards
-> 12](#coding-and-development-standards)
->
-> [9.3. Communication Protocols 13](#accessibility-standards)
->
-> [9.4. Data Privacy and Security Standards
-> 13](#data-privacy-and-security-standards)
->
-> [9.5. Encryption Protocol 13](#encryption-protocol)
-
-[**10. Gantt chart 13**](#gantt-chart)
-
-[**11. Parts 14**](#parts)
-
-> [11.1. Main Parts 14](#main-parts)
 
 # **Introduction**
 
